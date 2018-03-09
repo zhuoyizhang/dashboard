@@ -1,0 +1,770 @@
+#GA report - JumpStart
+  
+
+<!-- Limitations -->
+
+<!-- As with daily walk anti-sample techniques, user metrics and unique users are linked to the date range you are querying, so this technique will not match the numbers as if you queried over the whole date range. -->
+
+
+```{r main-block, echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+##auth
+# test
+
+library(googleAnalyticsR)
+library(googleAuthR)
+library(httr)
+##service_token <- gar_auth_service(json_file="C:\\Users\\Random\\Downloads\\R-40e8fcb3b34b.json")
+Sys.setenv(GA_AUTH_FILE='C:\\Users\\zhanzhuo.AUTH\\Downloads\\R-3b6ace1ed38c.json')
+
+set_config(config(ssl_verifypeer = 0L))
+
+
+
+options(googleAuthR.client_id = "6825601687-p6qn50ihi2pii5nv6boh3h5gbp6d5u2n.apps.googleusercontent.com")
+options(googleAuthR.client_secret = "3b6ace1ed38cba6d8840d9bc63fa03da01cc1629")
+options(googleAuthR.scopes.selected = "https://www.googleapis.com/auth/analytics")
+
+ga_auth()
+
+##set date range
+launchDate<-"2016-05-01"
+startDate<-"2018-02-01"
+endDate<-"2018-02-28"
+
+#month_or_week<-"ga:yearMonth"
+month_or_week<-"ga:week"
+
+
+##save view id for JumpStart
+##account_list <- ga_account_list()
+##ga_id <- account_list[17,'viewId']
+ga_id<-"116132142"
+##meta <- google_analytics_meta()
+##choose JS production segment
+##my_segments <- ga_segment_list()
+##segs <- my_segments$items
+##segs[,c("name","id","defintion")]
+segment_for_call <- "gaid::2gdgrZsdSO-YaNjeD3vzeQ"
+
+
+
+
+seg_obj <- segment_ga4("JumpStart in field up to 378 (UWP ver)", segment_id = segment_for_call)
+##meta2 <-meta[,c("name","type","status","uiName","group","description")]
+
+
+
+
+```
+The date range is from `r startDate` to `r endDate`.
+
+# basic funnel
+
+##Jumpstart New Users in 'K
+```{r new-users, echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+JumpstartNewUsers <- google_analytics_4(ga_id,
+                                    c(startDate,endDate),
+                                    dimensions=c(month_or_week),
+                                    segments = seg_obj,
+                                    metrics = c('newUsers')
+                                    ##anti_sample = TRUE
+                                    )
+```
+`r format(JumpstartNewUsers[,"newUsers"], digits=10, big.mark=",")`
+
+
+##Jumpstart New Users app select 2c17+ and country list in 'K (RR justification)
+```{r new-users-app-eligible, echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+df_exact_screen <- dim_filter("ga:dimension22","REGEXP","173|174|181",caseSensitive = FALSE,not = FALSE)
+df_exact_screen1 <- dim_filter("ga:country","REGEXP","United States|United Kingdom|Australia|New Zealand",caseSensitive = FALSE,not = FALSE)
+df_exact_screen2 <- dim_filter("ga:dimension23","REGEXP","Spectre",caseSensitive = FALSE,not = TRUE)
+df_exact_screen5 <- dim_filter("ga:appVersion","REGEXP","1.1.165.0|1.1.158.0|1.0.144.0|1.0.141.0",caseSensitive = FALSE,not = TRUE)
+df_exact_screen6 <- dim_filter("ga:dimension8","REGEXP","1.1.0.168|1.1.0.158|1.0.0.143|1.1.0.182|1.1.0.208|1.1.0.285",caseSensitive = FALSE,not = TRUE)
+df_exact_screen7 <- dim_filter("ga:dimension24","REGEXP","Consumer|Premium",caseSensitive = FALSE,not = FALSE)
+
+
+
+fc_exact_screen <- filter_clause_ga4(list(df_exact_screen,df_exact_screen1,df_exact_screen2,df_exact_screen5,df_exact_screen6,df_exact_screen7),operator = "AND")
+
+JumpstartNewUsers <- google_analytics_4(ga_id,
+                                    c(startDate,endDate),
+                                    dimensions=c(month_or_week),
+                                    segments = seg_obj,
+                                    metrics = c('newUsers'),
+                                    dim_filters = fc_exact_screen
+                                    ##anti_sample = TRUE
+                                    )
+```
+`r format(JumpstartNewUsers[,"newUsers"], digits=10, big.mark=",")`
+
+
+
+
+##cummulative launch units
+
+```{r cumulative-new-users, echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+
+OMENNewUsers <- google_analytics_4(ga_id, 
+                                    c(launchDate,endDate), 
+                                    dimensions=c('appName'), 
+                                    segments = seg_obj, 
+                                    metrics = c('newUsers')
+                                    ##anti_sample = TRUE
+                                    )
+```
+`r format(OMENNewUsers[,"newUsers"], digits=10, big.mark=",")`
+
+
+
+
+##Registration Screen shown in GA (in users)
+```{r reach-reg-screen,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+df_exact_screen <- dim_filter("screenName","EXACT","/register",caseSensitive = FALSE,not = FALSE)
+fc_exact_screen <- filter_clause_ga4(list(df_exact_screen))
+RegistrationScreenshown <- google_analytics_4(ga_id,
+                                              c(startDate,endDate),
+                                              dimensions=c(month_or_week),
+                                              segments = seg_obj,
+                                              metrics = c('users'),
+                                              dim_filters = fc_exact_screen
+                                              ##anti_sample = TRUE
+)
+```
+`r format(RegistrationScreenshown[,"users"], digits=10, big.mark=",")`
+
+
+##HP Registration from HP OOBe consent = yes email=yes,  firstname=yes,  lastname = yes
+```{r reg-in-1st-chance,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+
+df_exact_screen2 <- dim_filter("ga:dimension14","EXACT","Yes",caseSensitive = FALSE,not = FALSE)
+df_exact_screen3 <- dim_filter("ga:dimension20","EXACT","Valid",caseSensitive = FALSE,not = FALSE)
+df_exact_screen4 <- dim_filter("ga:dimension18","EXACT","Valid",caseSensitive = FALSE,not = FALSE)
+df_exact_screen5 <- dim_filter("ga:dimension19","EXACT","Valid",caseSensitive = FALSE,not = FALSE)
+
+
+
+fc_eligible <- filter_clause_ga4(list(df_exact_screen2,df_exact_screen3,df_exact_screen4,df_exact_screen5),operator = "AND")
+
+
+RegistrationScreenshown <- google_analytics_4(ga_id,
+                                              c(startDate,endDate),
+                                              dimensions=c(month_or_week),
+                                              segments = seg_obj,
+                                              metrics = c('newUsers'),
+                                              dim_filters = fc_eligible
+                                              ##anti_sample = TRUE
+)
+```
+`r format(RegistrationScreenshown[,"newUsers"], digits=10)`
+
+
+
+##Registration eligible user consent = No,  eligible 1
+```{r no-reg-part1,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+
+df_exact_screen1 <- dim_filter("ga:dimension14","EXACT","Yes",caseSensitive = FALSE,not = TRUE)
+
+
+
+fc_eligible <- filter_clause_ga4(list(df_exact_screen1))
+
+
+RegistrationScreenshown <- google_analytics_4(ga_id,
+                                              c(startDate,endDate),
+                                              dimensions=c(month_or_week),
+                                              segments = seg_obj,
+                                              metrics = c('newUsers'),
+                                              dim_filters = fc_eligible
+                                              ##anti_sample = TRUE
+)
+```
+`r format(RegistrationScreenshown[,"newUsers"], digits=10)`
+
+
+##Registration eligible user consent = Yes, email = no, eligible 2
+```{r no-reg-part2,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+
+df_exact_screen2 <- dim_filter("ga:dimension14","EXACT","Yes",caseSensitive = FALSE,not = FALSE)
+df_exact_screen3 <- dim_filter("ga:dimension20","EXACT","Valid",caseSensitive = FALSE,not = TRUE)
+
+fc_eligible <- filter_clause_ga4(list(df_exact_screen2,df_exact_screen3),operator = "AND")
+
+
+RegistrationScreenshown <- google_analytics_4(ga_id,
+                                              c(startDate,endDate),
+                                              dimensions=c(month_or_week),
+                                              segments = seg_obj,
+                                              metrics = c('newUsers'),
+                                              dim_filters = fc_eligible
+                                              ##anti_sample = TRUE
+)
+```
+`r format(RegistrationScreenshown[,"newUsers"], digits=10)`
+
+
+
+
+##HP Jumpstart Registration (2nd chance registration)
+```{r reg-2nd-chance,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+df_exact_ec <- dim_filter("eventCategory","EXACT","Register",caseSensitive = FALSE,not = FALSE)
+df_exact_ea <- dim_filter("eventAction","EXACT","HPAccountRegistered",caseSensitive = FALSE,not = FALSE)
+fc_exact_registered <- filter_clause_ga4(list(df_exact_ec,df_exact_ea),operator = "AND")
+JumpstartRegistration <- google_analytics_4(ga_id,
+                                              c(startDate,endDate),
+                                              dimensions=c(month_or_week),
+                                              segments = seg_obj,
+                                              metrics = c('users'),
+                                              dim_filters = fc_exact_registered
+                                              ##anti_sample = TRUE
+)
+```
+`r format(JumpstartRegistration[,"users"], digits=10, big.mark=",")`
+
+
+
+
+##HP mcafee from HP OOBe consent = yes email=yes
+```{r mcafee-1st-chance,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+
+df_exact_screen2 <- dim_filter("ga:dimension15","EXACT","Yes",caseSensitive = FALSE,not = FALSE)
+df_exact_screen3 <- dim_filter("ga:dimension20","EXACT","Valid",caseSensitive = FALSE,not = FALSE)
+
+
+fc_eligible <- filter_clause_ga4(list(df_exact_screen2,df_exact_screen3),operator = "AND")
+
+
+RegistrationScreenshown <- google_analytics_4(ga_id,
+                                              c(startDate,endDate),
+                                              dimensions=c(month_or_week),
+                                              segments = seg_obj,
+                                              metrics = c('newUsers'),
+                                              dim_filters = fc_eligible
+                                              ##anti_sample = TRUE
+)
+```
+`r format(RegistrationScreenshown[,"newUsers"], digits=10)`
+
+
+
+##mcafee eligible user consent = No  eligible 1
+```{r no-mcafee-part1,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+
+df_exact_screen1 <- dim_filter("ga:dimension15","EXACT","Yes",caseSensitive = FALSE,not = TRUE)
+
+
+
+fc_eligible <- filter_clause_ga4(list(df_exact_screen1))
+
+
+RegistrationScreenshown <- google_analytics_4(ga_id,
+                                              c(startDate,endDate),
+                                              dimensions=c(month_or_week),
+                                              segments = seg_obj,
+                                              metrics = c('newUsers'),
+                                              dim_filters = fc_eligible
+                                              ##anti_sample = TRUE
+)
+```
+`r format(RegistrationScreenshown[,"newUsers"], digits=10)`
+
+
+##mcafee eligible user consent = Yes, email = no eligible 2
+```{r no-mcafee-part2,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+
+df_exact_screen2 <- dim_filter("ga:dimension15","EXACT","Yes",caseSensitive = FALSE,not = FALSE)
+df_exact_screen3 <- dim_filter("ga:dimension20","EXACT","Valid",caseSensitive = FALSE,not = TRUE)
+
+fc_eligible <- filter_clause_ga4(list(df_exact_screen2,df_exact_screen3),operator = "AND")
+
+
+RegistrationScreenshown <- google_analytics_4(ga_id,
+                                              c(startDate,endDate),
+                                              dimensions=c(month_or_week),
+                                              segments = seg_obj,
+                                              metrics = c('newUsers'),
+                                              dim_filters = fc_eligible
+                                              ##anti_sample = TRUE
+)
+```
+`r format(RegistrationScreenshown[,"newUsers"], digits=10)`
+
+
+
+##Jumpstart McAfee Registrations
+```{r mcafee-2nd-chance,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+df_exact_ec_ma <- dim_filter("eventCategory","EXACT","Register",caseSensitive = FALSE,not = FALSE)
+df_exact_ea_ma <- dim_filter("eventAction","EXACT","McAfeeRegistered",caseSensitive = FALSE,not = FALSE)
+fc_exact_registered_ma <- filter_clause_ga4(list(df_exact_ec_ma,df_exact_ea_ma),operator = "AND")
+JumpstartMcAfeeRegistrations <- google_analytics_4(ga_id,
+                                            c(startDate,endDate),
+                                            dimensions=c(month_or_week),
+                                            segments = seg_obj,
+                                            metrics = c('users'),
+                                            dim_filters = fc_exact_registered_ma
+                                            ##anti_sample = TRUE
+)
+```
+`r format(JumpstartMcAfeeRegistrations[,"users"], digits=10, big.mark=",")`
+
+
+##McAfee Screen shown in GA (in users)
+```{r reach-mcafee-screen,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+df_exact_screen <- dim_filter("screenName","EXACT","/mcafee",caseSensitive = FALSE,not = FALSE)
+fc_exact_screen <- filter_clause_ga4(list(df_exact_screen))
+RegistrationScreenshown <- google_analytics_4(ga_id,
+                                              c(startDate,endDate),
+                                              dimensions=c(month_or_week),
+                                              segments = seg_obj,
+                                              metrics = c('users'),
+                                              dim_filters = fc_exact_screen
+                                              ##anti_sample = TRUE
+)
+```
+`r format(RegistrationScreenshown[,"users"], digits=10, big.mark=",")`
+
+
+
+##Jumpstart Dropbox Sign Up
+```{r dropbox-signup,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+
+df_exact_el_db <- dim_filter("eventLabel","EXACT","success",caseSensitive = FALSE,not = FALSE)
+df_exact_ea_db <- dim_filter("eventAction","EXACT","Dropbox-Signup",caseSensitive = FALSE,not = FALSE)
+fc_exact_registered_db <- filter_clause_ga4(list(df_exact_el_db,df_exact_ea_db),operator = "AND")
+JumpstartDropboxSignUps <- google_analytics_4(ga_id,
+                                                   c(startDate,endDate),
+                                                   dimensions=c(month_or_week),
+                                                   segments = seg_obj,
+                                                   metrics = c('users'),
+                                                   dim_filters = fc_exact_registered_db
+                                                   ##anti_sample = TRUE
+)
+```
+`r format(JumpstartDropboxSignUps[,"users"], digits=10, big.mark=",")`
+
+
+##Monthly Active Users in 'K
+```{r all-users,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+MonthlyActiveUsers  <- google_analytics_4(ga_id,
+                                        c(startDate,endDate),
+                                        dimensions=c(month_or_week),
+                                        segments = seg_obj,
+                                        metrics = c('users')
+                                        ##anti_sample = TRUE
+)
+```
+`r format(MonthlyActiveUsers[,"users"], digits=10, big.mark=",")`
+
+
+##Returning users
+```{r returning-users,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+df_exact_usertype <- dim_filter("userType","EXACT","Returning Visitor",caseSensitive = FALSE,not = FALSE)
+fc_exact_usertype <- filter_clause_ga4(list(df_exact_usertype))
+Returningusers <- google_analytics_4(ga_id,
+                                              c(startDate,endDate),
+                                              dimensions=c(month_or_week),
+                                              segments = seg_obj,
+                                              metrics = c('users'),
+                                              dim_filters = fc_exact_usertype
+                                              ##anti_sample = TRUE
+)
+```
+`r format(Returningusers[,"users"], digits=10, big.mark=",")`
+
+
+
+
+##Avg. session duration per week
+```{r avg-session-duration-byweek,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+AvgDurationandUsers <- google_analytics_4(ga_id,
+                                          c(startDate,endDate),
+                                          dimensions=c(month_or_week),
+                                          segments = seg_obj,
+                                          metrics = c("ga:avgSessionDuration")
+                                          ##anti_sample = TRUE
+)
+AvgDurationandUsers[,"avgSessionDuration"]
+```
+
+
+
+##Avg. seconds of use per user per month
+```{r avg-session-duration-bymonth,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+AvgDurationandUsers <- google_analytics_4(ga_id, 
+                                          c(startDate,endDate), 
+                                          dimensions=c('yearMonth'), 
+                                          segments = seg_obj, 
+                                          metrics = c("ga:sessionDuration","users")
+                                          ##anti_sample = TRUE
+)
+AvgDurationPerUser<-AvgDurationandUsers[1,"sessionDuration"]/AvgDurationandUsers[1,"users"]
+```
+`r format(AvgDurationPerUser, digits=10, big.mark=",")`
+
+
+
+# concierge
+
+
+##cummulative panel clicks
+
+
+```{r cum-panel-clicks,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+
+df_exact_ea_panel_clk <- dim_filter("eventAction","EXACT","ContentClicked",caseSensitive = FALSE,not = FALSE)
+fc_exact_ea_panel_clk <- filter_clause_ga4(list(df_exact_ea_panel_clk),operator = "AND")
+MonthlyPanelClicks <- google_analytics_4(ga_id, 
+                                    c(launchDate,endDate), 
+                                    dimensions=c('appName'), 
+                                    segments = seg_obj, 
+                                              metrics = c('totalEvents'),
+                                              dim_filters = fc_exact_ea_panel_clk
+                                              ##anti_sample = TRUE
+)
+```
+`r format(MonthlyPanelClicks[,"totalEvents"], digits=10, big.mark=",")`
+
+##Online Concierge homepage screen shown (in users)
+```{r reach-concierge-screen,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+df_exact_ea_panel_imp <- dim_filter("screenName","REGEXP","/OnlineConcierge|/OnlineConcierge-B",caseSensitive = FALSE,not = FALSE)
+fc_exact_ea_panel_imp <- filter_clause_ga4(list(df_exact_ea_panel_imp),operator = "AND")
+onlineConciergeScreenUsers  <- google_analytics_4(ga_id, 
+                                              c(startDate,endDate), 
+                                              dimensions=c(month_or_week), 
+                                              segments = seg_obj, 
+                                              metrics = c('users'),
+                                              dim_filters = fc_exact_ea_panel_imp
+                                              ##anti_sample = TRUE
+)
+```
+`r format(onlineConciergeScreenUsers[,"users"], digits=10, big.mark=",")`
+
+
+## panel impression in users - panel seen by user
+```{r panel-seen-users,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+df_exact_ea_panel_imp <- dim_filter("eventAction","REGEXP","ContentExposed|PanelSeen",caseSensitive = FALSE,not = FALSE)
+fc_exact_ea_panel_imp <- filter_clause_ga4(list(df_exact_ea_panel_imp),operator = "AND")
+MonthlyPanelImpression  <- google_analytics_4(ga_id, 
+                                              c(startDate,endDate), 
+                                              dimensions=c(month_or_week), 
+                                              segments = seg_obj, 
+                                              metrics = c('users'),
+                                              dim_filters = fc_exact_ea_panel_imp
+                                              ##anti_sample = TRUE
+)
+```
+`r format(MonthlyPanelImpression[,"users"], digits=10, big.mark=",")`
+
+##panel received by user
+```{r panel-received-users,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+df_exact_ea_panel_imp <- dim_filter("eventAction","REGEXP","ContentExposed|PanelReceived",caseSensitive = FALSE,not = FALSE)
+fc_exact_ea_panel_imp <- filter_clause_ga4(list(df_exact_ea_panel_imp),operator = "AND")
+MonthlyPanelImpression  <- google_analytics_4(ga_id, 
+                                              c(startDate,endDate), 
+                                              dimensions=c(month_or_week), 
+                                              segments = seg_obj, 
+                                              metrics = c('users'),
+                                              dim_filters = fc_exact_ea_panel_imp
+                                              ##anti_sample = TRUE
+)
+```
+`r format(MonthlyPanelImpression[,"users"], digits=10, big.mark=",")`
+
+
+
+## panel clicks in users
+```{r panel-clicked-users,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+df_exact_ea_panel_clk <- dim_filter("eventAction","EXACT","ContentClicked",caseSensitive = FALSE,not = FALSE)
+fc_exact_ea_panel_clk <- filter_clause_ga4(list(df_exact_ea_panel_clk),operator = "AND")
+MonthlyPanelClicks   <- google_analytics_4(ga_id, 
+                                              c(startDate,endDate), 
+                                              dimensions=c(month_or_week), 
+                                              segments = seg_obj, 
+                                              metrics = c('users'),
+                                              dim_filters = fc_exact_ea_panel_clk
+                                              ##anti_sample = TRUE
+)
+```
+`r format(MonthlyPanelClicks[,"users"], digits=10, big.mark=",")`
+
+## Panel impresssion in clicks
+```{r panel-received-clicks,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+df_exact_ea_panel_imp <- dim_filter("eventAction","REGEXP","ContentExposed|PanelReceived",caseSensitive = FALSE,not = FALSE)
+fc_exact_ea_panel_imp <- filter_clause_ga4(list(df_exact_ea_panel_imp),operator = "AND")
+MonthlyPanelImpression  <- google_analytics_4(ga_id, 
+                                              c(startDate,endDate), 
+                                              dimensions=c(month_or_week), 
+                                              segments = seg_obj, 
+                                              metrics = c('totalEvents'),
+                                              dim_filters = fc_exact_ea_panel_imp
+                                              #anti_sample = TRUE
+)
+MonthlyPanelImpression[,"totalEvents"]
+```
+
+
+## Panel Clicks in clicks
+```{r panel-cilced-clicks,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+df_exact_ea_panel_clk <- dim_filter("eventAction","EXACT","ContentClicked",caseSensitive = FALSE,not = FALSE)
+fc_exact_ea_panel_clk <- filter_clause_ga4(list(df_exact_ea_panel_clk),operator = "AND")
+MonthlyPanelClicks   <- google_analytics_4(ga_id, 
+                                              c(startDate,endDate), 
+                                              dimensions=c(month_or_week), 
+                                              segments = seg_obj, 
+                                              metrics = c('totalEvents'),
+                                              dim_filters = fc_exact_ea_panel_clk
+                                              #anti_sample = TRUE
+)
+MonthlyPanelClicks[,"totalEvents"]
+
+```
+
+
+
+
+
+
+
+# App download
+
+## Number of units with app download functions (all users)
+```{r app-eligible-units-byflow,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+df_reg_cd34 <- dim_filter("ga:dimension34","REGEXP","AppInstall",caseSensitive = FALSE,not = FALSE)
+fc_reg_cd34 <- filter_clause_ga4(list(df_reg_cd34),operator = "AND")
+unitsWithAppdownload   <- google_analytics_4(ga_id, 
+                                           c(startDate,endDate), 
+                                           dimensions=c(month_or_week), 
+                                           segments = seg_obj, 
+                                           metrics = c('users','newUsers'),
+                                           dim_filters = fc_reg_cd34 
+                                           ##anti_sample = TRUE
+)
+```
+`r format(unitsWithAppdownload[,"users"], digits=10, big.mark=",")`
+
+
+## Number of units with app download functions (new users)
+
+`r format(unitsWithAppdownload[,"newUsers"], digits=10, big.mark=",")`
+
+
+
+##App download screen shown (in users)
+```{r reach-app-screen,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+df_exact_ea_panel_imp <- dim_filter("screenName","REGEXP","Appselect1|GetMoreApps|AppSelect_Page|GetMoreApps_Page",caseSensitive = FALSE,not = FALSE)
+fc_exact_ea_panel_imp <- filter_clause_ga4(list(df_exact_ea_panel_imp),operator = "AND")
+onlineConciergeScreenUsers  <- google_analytics_4(ga_id, 
+                                              c(startDate,endDate), 
+                                              dimensions=c(month_or_week), 
+                                              segments = seg_obj, 
+                                              metrics = c('users'),
+                                              dim_filters = fc_exact_ea_panel_imp
+                                              ##anti_sample = TRUE
+)
+```
+`r format(onlineConciergeScreenUsers[,"users"], digits=10, big.mark=",")`
+
+
+
+
+## number of Users install apps successfully
+```{r app-install-users,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+
+df_exact_el_app <- dim_filter("eventLabel","EXACT","success",caseSensitive = FALSE,not = FALSE)
+df_exact_ea_app <- dim_filter("eventAction","EXACT","AppInstalled",caseSensitive = FALSE,not = FALSE)
+df_exact_ea_app2 <- dim_filter("ga:dimension45","REGEXP","Live",caseSensitive = FALSE,not = FALSE)
+
+fc_exact_install_app <- filter_clause_ga4(list(df_exact_el_app,df_exact_ea_app,df_exact_ea_app2),operator = "AND")
+downloadinstallappsinUsers <- google_analytics_4(ga_id, 
+                                              c(startDate,endDate), 
+                                              dimensions=c(month_or_week), 
+                                              segments = seg_obj, 
+                                              metrics = c('users'),
+                                              dim_filters = fc_exact_install_app 
+                                              ##anti_sample = TRUE
+)
+```
+`r format(downloadinstallappsinUsers[,"users"], digits=10, big.mark=",")`
+
+
+## Number of apps installed
+```{r app-install-apps,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+
+df_exact_el_app <- dim_filter("eventLabel","EXACT","success",caseSensitive = FALSE,not = FALSE)
+df_exact_ea_app <- dim_filter("eventAction","EXACT","AppInstalled",caseSensitive = FALSE,not = FALSE)
+df_exact_ea_app2 <- dim_filter("ga:dimension45","REGEXP","Live",caseSensitive = FALSE,not = FALSE)
+
+fc_exact_install_app <- filter_clause_ga4(list(df_exact_el_app,df_exact_ea_app, df_exact_ea_app2),operator = "AND")
+downloadinstallappsinUsers <- google_analytics_4(ga_id, 
+                                              c(startDate,endDate), 
+                                              dimensions=c(month_or_week), 
+                                              segments = seg_obj, 
+                                              metrics = c('totalEvents'),
+                                              dim_filters = fc_exact_install_app
+                                              #anti_sample = TRUE
+)
+downloadinstallappsinUsers[,"totalEvents"]
+
+```
+
+#app operational view
+
+## app selection in apps
+## app selection in users
+
+```{r app-select,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+
+df_exact_ea_app <- dim_filter("eventAction","EXACT","AppSelected",caseSensitive = FALSE,not = FALSE)
+df_exact_ea_app2 <- dim_filter("ga:dimension45","REGEXP","Live",caseSensitive = FALSE,not = FALSE)
+
+fc_exact_install_app <- filter_clause_ga4(list(df_exact_ea_app, df_exact_ea_app2),operator = "AND")
+downloadinstallappsinUsers <- google_analytics_4(ga_id, 
+                                              c(startDate,endDate), 
+                                              dimensions=c(month_or_week), 
+                                              segments = seg_obj, 
+                                              metrics = c('totalEvents','users'),
+                                              dim_filters = fc_exact_install_app
+                                              #anti_sample = TRUE
+)
+downloadinstallappsinUsers[,"totalEvents"]
+
+downloadinstallappsinUsers[,"users"]
+
+```
+
+
+
+
+
+## download attempts
+```{r download-attempt,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+
+df_exact_ea_app <- dim_filter("eventAction","EXACT","AppDownloaded",caseSensitive = FALSE,not = FALSE)
+df_exact_ea_app2 <- dim_filter("ga:dimension45","REGEXP","Live",caseSensitive = FALSE,not = FALSE)
+
+fc_exact_install_app <- filter_clause_ga4(list(df_exact_ea_app, df_exact_ea_app2),operator = "AND")
+downloadinstallappsinUsers <- google_analytics_4(ga_id, 
+                                              c(startDate,endDate), 
+                                              dimensions=c(month_or_week), 
+                                              segments = seg_obj, 
+                                              metrics = c('totalEvents'),
+                                              dim_filters = fc_exact_install_app
+                                              #anti_sample = TRUE
+)
+downloadinstallappsinUsers[,"totalEvents"]
+
+```
+
+
+
+## download failure
+```{r download-failure,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+
+df_exact_el_app <- dim_filter("eventLabel","EXACT","fail",caseSensitive = FALSE,not = FALSE)
+df_exact_ea_app <- dim_filter("eventAction","EXACT","AppDownloaded",caseSensitive = FALSE,not = FALSE)
+df_exact_ea_app2 <- dim_filter("ga:dimension45","REGEXP","Live",caseSensitive = FALSE,not = FALSE)
+
+fc_exact_install_app <- filter_clause_ga4(list(df_exact_el_app,df_exact_ea_app,df_exact_ea_app2),operator = "AND")
+downloadinstallappsinUsers <- google_analytics_4(ga_id, 
+                                              c(startDate,endDate), 
+                                              dimensions=c(month_or_week), 
+                                              segments = seg_obj, 
+                                              metrics = c('totalEvents'),
+                                              dim_filters = fc_exact_install_app
+                                              #anti_sample = TRUE
+)
+downloadinstallappsinUsers[,"totalEvents"]
+
+```
+
+## download cancel
+```{r download-cancel,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+
+df_exact_el_app <- dim_filter("eventLabel","EXACT","cancel",caseSensitive = FALSE,not = FALSE)
+df_exact_ea_app <- dim_filter("eventAction","EXACT","AppDownloaded",caseSensitive = FALSE,not = FALSE)
+df_exact_ea_app2 <- dim_filter("ga:dimension45","REGEXP","Live",caseSensitive = FALSE,not = FALSE)
+
+fc_exact_install_app <- filter_clause_ga4(list(df_exact_el_app,df_exact_ea_app,df_exact_ea_app2),operator = "AND")
+downloadinstallappsinUsers <- google_analytics_4(ga_id, 
+                                              c(startDate,endDate), 
+                                              dimensions=c(month_or_week), 
+                                              segments = seg_obj, 
+                                              metrics = c('totalEvents'),
+                                              dim_filters = fc_exact_install_app
+                                              #anti_sample = TRUE
+)
+downloadinstallappsinUsers[,"totalEvents"]
+
+```
+
+## install attempt
+```{r instal-attempt,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+
+df_exact_ea_app <- dim_filter("eventAction","EXACT","AppInstalled",caseSensitive = FALSE,not = FALSE)
+df_exact_ea_app2 <- dim_filter("ga:dimension45","REGEXP","Live",caseSensitive = FALSE,not = FALSE)
+
+fc_exact_install_app <- filter_clause_ga4(list(df_exact_ea_app,df_exact_ea_app2),operator = "AND")
+downloadinstallappsinUsers <- google_analytics_4(ga_id, 
+                                              c(startDate,endDate), 
+                                              dimensions=c(month_or_week), 
+                                              segments = seg_obj, 
+                                              metrics = c('totalEvents'),
+                                              dim_filters = fc_exact_install_app
+                                              #anti_sample = TRUE
+)
+downloadinstallappsinUsers[,"totalEvents"]
+
+```
+
+
+## install fail
+```{r install-fail,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+
+df_exact_el_app <- dim_filter("eventLabel","EXACT","fail",caseSensitive = FALSE,not = FALSE)
+df_exact_ea_app <- dim_filter("eventAction","EXACT","AppInstalled",caseSensitive = FALSE,not = FALSE)
+df_exact_ea_app2 <- dim_filter("ga:dimension45","REGEXP","Live",caseSensitive = FALSE,not = FALSE)
+
+fc_exact_install_app <- filter_clause_ga4(list(df_exact_el_app,df_exact_ea_app,df_exact_ea_app2),operator = "AND")
+downloadinstallappsinUsers <- google_analytics_4(ga_id, 
+                                              c(startDate,endDate), 
+                                              dimensions=c(month_or_week), 
+                                              segments = seg_obj, 
+                                              metrics = c('totalEvents'),
+                                              dim_filters = fc_exact_install_app
+                                              #anti_sample = TRUE
+)
+downloadinstallappsinUsers[,"totalEvents"]
+
+```
