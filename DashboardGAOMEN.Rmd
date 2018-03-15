@@ -1,0 +1,701 @@
+#GA monthly report - OMEN
+
+##one known issue:with or without segment, user and all users are not matching with dashboard
+
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+##auth
+
+library(googleAnalyticsR)
+library(googleAuthR)
+##service_token <- gar_auth_service(json_file="C:\\Users\\Random\\Downloads\\R-40e8fcb3b34b.json")
+Sys.setenv(GA_AUTH_FILE='C:\\Users\\zhanzhuo.AUTH\\Downloads\\R-3b6ace1ed38c.json')
+
+
+
+
+options(googleAuthR.client_id = "6825601687-p6qn50ihi2pii5nv6boh3h5gbp6d5u2n.apps.googleusercontent.com")
+options(googleAuthR.client_secret = "3b6ace1ed38cba6d8840d9bc63fa03da01cc1629")
+options(googleAuthR.scopes.selected = "https://www.googleapis.com/auth/analytics")
+ga_auth()
+
+##save view id for JumpStart
+##account_list <- ga_account_list()
+##ga_id <- account_list[17,'viewId']
+ga_id<-"120376362"
+ga_JumpStart_id<-"116132142"
+
+##meta <- google_analytics_meta()
+##choose JS production segment
+##my_segments <- ga_segment_list()
+##segs <- my_segments$items
+##segs[,c("name","id","defintion")]
+segment_for_call <- "gaid::X5Y0S8WHTXK5DCKDp1J_QA"
+segment_for_call_Jumpstart <- "gaid::2gdgrZsdSO-YaNjeD3vzeQ"
+
+
+
+
+
+seg_obj <- segment_ga4("OMEN", segment_id = segment_for_call)
+seg_obj_JumpStart <- segment_ga4("jumpstart", segment_id = segment_for_call_Jumpstart)
+
+##meta2 <-meta[,c("name","type","status","uiName","group","description")]
+
+launchDate<-"2017-06-01"
+
+startDate<-"2018-02-25"
+endDate<-"2018-03-10"
+
+#month_or_week<-"ga:yearMonth"
+month_or_week<-"ga:week"
+
+
+```
+The date range is from `r startDate` to `r endDate`.
+
+
+
+##OMEN booted units in 'K (from JumpStart)
+
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+df_reg_cd4 <- dim_filter("ga:dimension23","REGEXP","omen",caseSensitive = FALSE,not = FALSE)
+fc_reg_cd4 <- filter_clause_ga4(list(df_reg_cd4),operator = "AND")
+
+OMENBooted <- google_analytics_4(ga_JumpStart_id, 
+                                    c(startDate,endDate), 
+                                    dimensions=c(month_or_week), 
+                                    segments = seg_obj_JumpStart, 
+                                    metrics = c('newUsers'),
+                                    dim_filters = fc_reg_cd4
+                                    ##anti_sample = TRUE
+                                    )
+
+
+```
+`r format(OMENBooted[,"newUsers"], digits=10, big.mark=",")`
+
+
+
+##First time launch (new users) in 'K
+
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+
+OMENNewUsers <- google_analytics_4(ga_id, 
+                                    c(startDate,endDate), 
+                                    dimensions=c(month_or_week), 
+                                    segments = seg_obj, 
+                                    metrics = c('newUsers','users')
+                                    ##anti_sample = TRUE
+                                    )
+```
+`r format(OMENNewUsers[,"newUsers"], digits=10, big.mark=",")`
+
+
+
+
+
+##cummulative launch units
+
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+
+OMENNewUsers <- google_analytics_4(ga_id, 
+                                    c(launchDate,endDate), 
+                                    dimensions=c('appName'), 
+                                    segments = seg_obj, 
+                                    metrics = c('newUsers')
+                                    ##anti_sample = TRUE
+                                    )
+```
+`r format(OMENNewUsers[,"newUsers"], digits=10, big.mark=",")`
+
+
+
+
+
+##Returning users
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+df_exact_ut_ret <- dim_filter("userType","EXACT","Returning Visitor",caseSensitive = FALSE,not = FALSE)
+fc_exact_ret <- filter_clause_ga4(list(df_exact_ut_ret))
+Returningusers <- google_analytics_4(ga_id, 
+                                              c(startDate,endDate), 
+                                              dimensions=c(month_or_week), 
+                                              segments = seg_obj, 
+                                              metrics = c('users'),
+                                              dim_filters = fc_exact_ret
+                                              ##anti_sample = TRUE
+)
+```
+`r format(Returningusers[,"users"], digits=10, big.mark=",")`
+
+
+
+##super Returning users >=3
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+df_exact_ut_ret1 <- dim_filter("ga:sessionCount","EXACT","1",caseSensitive = FALSE,not = TRUE)
+df_exact_ut_ret2 <- dim_filter("ga:sessionCount","EXACT","2",caseSensitive = FALSE,not = TRUE)
+fc_exact_ret <- filter_clause_ga4(list(df_exact_ut_ret1,df_exact_ut_ret2),operator="AND")
+Returningusers <- google_analytics_4(ga_id, 
+                                              c(startDate,endDate), 
+                                              dimensions=c(month_or_week), 
+                                              segments = seg_obj, 
+                                              metrics = c('users'),
+                                              dim_filters = fc_exact_ret
+                                              ##anti_sample = TRUE
+)
+```
+`r format(Returningusers[,"users"], digits=10, big.mark=",")`
+
+
+##All launches in 'K
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+AllLaunches  <- google_analytics_4(ga_id, 
+                                        c(startDate,endDate), 
+                                        dimensions=c(month_or_week), 
+                                        segments = seg_obj, 
+                                        metrics = c('users')
+                                        ##anti_sample = TRUE
+)
+```
+`r format(AllLaunches[,"users"], digits=10, big.mark=",")`
+
+##Avg. seconds per session per month
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+AvgDurationandSessions <- google_analytics_4(ga_id, 
+                                          c(startDate,endDate), 
+                                          dimensions=c(month_or_week), 
+                                          segments = seg_obj, 
+                                          metrics = c("ga:avgSessionDuration")
+                                          ##anti_sample = TRUE
+)
+```
+`r format(AvgDurationandSessions[,"avgSessionDuration"], digits=10, big.mark=",")`
+
+
+
+#Network
+
+##eligible units - Network
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+df_exact_ut_ret <- dim_filter("ga:dimension5","REGEXP","Network",caseSensitive = FALSE,not = FALSE)
+fc_exact_ret <- filter_clause_ga4(list(df_exact_ut_ret))
+eligibleNetworkUsers <- google_analytics_4(ga_id, 
+                                          c(startDate,endDate), 
+                                          dimensions=c(month_or_week), 
+                                          segments = seg_obj, 
+                                          metrics = c("users"),
+                                          dim_filters = fc_exact_ret
+                                          ##anti_sample = TRUE
+)
+eligibleNetworkUsers<-eligibleNetworkUsers[,"users"]
+```
+`r format(eligibleNetworkUsers, digits=10, big.mark=",")`
+
+##eligible units new- Network
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+df_exact_ut_ret <- dim_filter("ga:dimension5","REGEXP","Network",caseSensitive = FALSE,not = FALSE)
+fc_exact_ret <- filter_clause_ga4(list(df_exact_ut_ret))
+eligibleNetworkUsers <- google_analytics_4(ga_id, 
+                                          c(startDate,endDate), 
+                                          dimensions=c(month_or_week), 
+                                          segments = seg_obj, 
+                                          metrics = c("newUsers"),
+                                          dim_filters = fc_exact_ret
+                                          ##anti_sample = TRUE
+)
+eligibleNetworkUsers<-eligibleNetworkUsers[,"newUsers"]
+```
+`r format(eligibleNetworkUsers, digits=10, big.mark=",")`
+
+
+
+##super Returning users >=3
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+df_exact_ut_ret1 <- dim_filter("ga:sessionCount","EXACT","1",caseSensitive = FALSE,not = TRUE)
+df_exact_ut_ret2 <- dim_filter("ga:sessionCount","EXACT","2",caseSensitive = FALSE,not = TRUE)
+df_exact_ut_ret <- dim_filter("ga:dimension5","REGEXP","Network",caseSensitive = FALSE,not = FALSE)
+
+fc_exact_ret <- filter_clause_ga4(list(df_exact_ut_ret1,df_exact_ut_ret2,df_exact_ut_ret),operator="AND")
+Returningusers <- google_analytics_4(ga_id, 
+                                              c(startDate,endDate), 
+                                              dimensions=c(month_or_week), 
+                                              segments = seg_obj, 
+                                              metrics = c('users'),
+                                              dim_filters = fc_exact_ret
+                                              ##anti_sample = TRUE
+)
+```
+`r format(Returningusers[,"users"], digits=10, big.mark=",")`
+
+##eligible units - network-returning
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+df_exact_ut_ret <- dim_filter("ga:dimension5","REGEXP","Network",caseSensitive = FALSE,not = FALSE)
+df_exact_ut_ret2 <- dim_filter("userType","REGEXP","returning",caseSensitive = FALSE,not = FALSE)
+fc_exact_ret <- filter_clause_ga4(list(df_exact_ut_ret,df_exact_ut_ret2),operator="AND")
+networkreturn <- google_analytics_4(ga_id, 
+                                          c(startDate,endDate), 
+                                          dimensions=c(month_or_week), 
+                                          segments = seg_obj, 
+                                          metrics = c("users"),
+                                          dim_filters = fc_exact_ret
+                                          ##anti_sample = TRUE
+)
+networkreturn<-networkreturn[,"users"]
+```
+`r format(networkreturn, digits=10, big.mark=",")`
+
+
+##Network -switched in users
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+df_exact_ut_ret <- dim_filter("ga:dimension19","REGEXP","NetworkSpeed",caseSensitive = FALSE,not = FALSE)
+df_exact_ut_ret2 <- dim_filter("eventAction","REGEXP","AUTOModeClicked|CUSTOMModeClicked|OFFModeClicked",caseSensitive = FALSE,not = FALSE)
+fc_exact_ret <- filter_clause_ga4(list(df_exact_ut_ret,df_exact_ut_ret2),operator="AND")
+NetworkSwitched <- google_analytics_4(ga_id, 
+                                          c(startDate,endDate), 
+                                          dimensions=c(month_or_week), 
+                                          segments = seg_obj, 
+                                          metrics = c("users","totalEvents"),
+                                          dim_filters = fc_exact_ret
+                                          ##anti_sample = TRUE
+)
+
+```
+`r format(NetworkSwitched[,"users"], digits=10, big.mark=",")`
+
+##Network -users who engage in mode/priority switching or block/unblock in the period - block was not instrumented
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+df_exact_ut_ret <- dim_filter("ga:dimension19","REGEXP","NetworkSpeed",caseSensitive = FALSE,not = FALSE)
+df_exact_ut_ret2 <- dim_filter("eventAction","REGEXP","AUTOModeClicked|CUSTOMModeClicked|OFFModeClicked|ChangeHigh|ChangeMedium",caseSensitive = FALSE,not = FALSE)
+df_exact_ut_ret3 <- dim_filter("eventCategory","REGEXP","NetworkSpeed",caseSensitive = FALSE,not = FALSE)
+fc_exact_ret <- filter_clause_ga4(list(df_exact_ut_ret,df_exact_ut_ret2,df_exact_ut_ret3),operator="AND")
+NetworkSwitched <- google_analytics_4(ga_id, 
+                                          c(startDate,endDate), 
+                                          dimensions=c(month_or_week), 
+                                          segments = seg_obj, 
+                                          metrics = c("users","totalEvents"),
+                                          dim_filters = fc_exact_ret
+                                          ##anti_sample = TRUE
+)
+
+```
+`r format(NetworkSwitched[,"users"], digits=10, big.mark=",")`
+
+##Network -switched in clicks
+
+`r format(NetworkSwitched[,"totalEvents"], digits=10, big.mark=",")`
+
+
+
+
+
+
+##Network -active users
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+df_exact_ut_ret <- dim_filter("ga:dimension19","REGEXP","NetworkSpeed",caseSensitive = FALSE,not = FALSE)
+df_exact_ut_ret2 <- dim_filter("eventCategory","REGEXP","NetworkSpeed",caseSensitive = FALSE,not = FALSE)
+fc_exact_ret <- filter_clause_ga4(list(df_exact_ut_ret,df_exact_ut_ret2),operator="AND")
+NetworkSwitched <- google_analytics_4(ga_id, 
+                                          c(startDate,endDate), 
+                                          dimensions=c(month_or_week), 
+                                          segments = seg_obj, 
+                                          metrics = c("users"),
+                                          dim_filters = fc_exact_ret
+                                          ##anti_sample = TRUE
+)
+
+```
+`r format(NetworkSwitched[,"users"], digits=10, big.mark=",")`
+
+
+
+#Macro key
+
+##eligible units - Macro Key
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+df_exact_ut_ret <- dim_filter("ga:dimension5","REGEXP","Keyboard|Macro",caseSensitive = FALSE,not = FALSE)
+fc_exact_ret <- filter_clause_ga4(list(df_exact_ut_ret))
+eligibleUsers <- google_analytics_4(ga_id, 
+                                          c(startDate,endDate), 
+                                          dimensions=c(month_or_week), 
+                                          segments = seg_obj, 
+                                          metrics = c("users"),
+                                          dim_filters = fc_exact_ret
+                                          ##anti_sample = TRUE
+)
+eligibleUsers<-eligibleUsers[,"users"]
+```
+`r format(eligibleUsers, digits=10, big.mark=",")`
+
+##eligible units new - Macro Key
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+df_exact_ut_ret <- dim_filter("ga:dimension5","REGEXP","Keyboard|Macro",caseSensitive = FALSE,not = FALSE)
+fc_exact_ret <- filter_clause_ga4(list(df_exact_ut_ret))
+eligibleUsers <- google_analytics_4(ga_id, 
+                                          c(startDate,endDate), 
+                                          dimensions=c(month_or_week), 
+                                          segments = seg_obj, 
+                                          metrics = c("newUsers"),
+                                          dim_filters = fc_exact_ret
+                                          ##anti_sample = TRUE
+)
+eligibleUsers<-eligibleUsers[,"newUsers"]
+```
+`r format(eligibleUsers, digits=10, big.mark=",")`
+
+#super return - marcro key
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+df_exact_ut_ret1 <- dim_filter("ga:sessionCount","EXACT","1",caseSensitive = FALSE,not = TRUE)
+df_exact_ut_ret2 <- dim_filter("ga:sessionCount","EXACT","2",caseSensitive = FALSE,not = TRUE)
+df_exact_ut_ret <- dim_filter("ga:dimension5","REGEXP","Keyboard|Macro",caseSensitive = FALSE,not = FALSE)
+
+fc_exact_ret <- filter_clause_ga4(list(df_exact_ut_ret1,df_exact_ut_ret2,df_exact_ut_ret),operator="AND")
+Returningusers <- google_analytics_4(ga_id, 
+                                              c(startDate,endDate), 
+                                              dimensions=c(month_or_week), 
+                                              segments = seg_obj, 
+                                              metrics = c('users'),
+                                              dim_filters = fc_exact_ret
+                                              ##anti_sample = TRUE
+)
+```
+`r format(Returningusers[,"users"], digits=10, big.mark=",")`
+
+##eligible units - macro-returning
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+df_exact_ut_ret <- dim_filter("ga:dimension5","REGEXP","Keyboard|Macro",caseSensitive = FALSE,not = FALSE)
+df_exact_ut_ret2 <- dim_filter("userType","REGEXP","returning",caseSensitive = FALSE,not = FALSE)
+fc_exact_ret <- filter_clause_ga4(list(df_exact_ut_ret,df_exact_ut_ret2),operator="AND")
+macroreturn <- google_analytics_4(ga_id, 
+                                          c(startDate,endDate), 
+                                          dimensions=c(month_or_week), 
+                                          segments = seg_obj, 
+                                          metrics = c("users"),
+                                          dim_filters = fc_exact_ret
+                                          ##anti_sample = TRUE
+)
+macroreturn<-macroreturn[,"users"]
+```
+`r format(macroreturn, digits=10, big.mark=",")`
+
+
+##MacroKeys assign
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+df_exact_ut_ret <- dim_filter("ga:dimension19","REGEXP","Macro_Keys",caseSensitive = FALSE,not = FALSE)
+df_exact_ut_ret2 <- dim_filter("eventAction","REGEXP","Assign",caseSensitive = FALSE,not = FALSE)
+df_exact_ut_ret3 <- dim_filter("eventCategory","REGEXP","MacroKeys",caseSensitive = FALSE,not = FALSE)
+fc_exact_ret <- filter_clause_ga4(list(df_exact_ut_ret,df_exact_ut_ret2,df_exact_ut_ret3),operator="AND")
+MacroKeys <- google_analytics_4(ga_id, 
+                                          c(startDate,endDate), 
+                                          dimensions=c(month_or_week), 
+                                          segments = seg_obj, 
+                                          metrics = c("users","totalEvents"),
+                                          dim_filters = fc_exact_ret
+                                          ##anti_sample = TRUE
+)
+
+```
+`r format(MacroKeys[,"users"], digits=10, big.mark=",")`
+
+
+
+##MacroKeys -active users
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+df_exact_ut_ret <- dim_filter("ga:dimension19","REGEXP","Macro_Keys",caseSensitive = FALSE,not = FALSE)
+df_exact_ut_ret2 <- dim_filter("eventCategory","REGEXP","MacroKeys",caseSensitive = FALSE,not = FALSE)
+fc_exact_ret <- filter_clause_ga4(list(df_exact_ut_ret,df_exact_ut_ret2),operator="AND")
+NetworkSwitched <- google_analytics_4(ga_id, 
+                                          c(startDate,endDate), 
+                                          dimensions=c(month_or_week), 
+                                          segments = seg_obj, 
+                                          metrics = c("users"),
+                                          dim_filters = fc_exact_ret
+                                          ##anti_sample = TRUE
+)
+
+```
+`r format(NetworkSwitched[,"users"], digits=10, big.mark=",")`
+
+
+
+#lighting
+
+##eligible units - Lighting
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+df_exact_ut_ret <- dim_filter("ga:dimension5","REGEXP","Lighting",caseSensitive = FALSE,not = FALSE)
+fc_exact_ret <- filter_clause_ga4(list(df_exact_ut_ret))
+eligibleUsers <- google_analytics_4(ga_id, 
+                                          c(startDate,endDate), 
+                                          dimensions=c(month_or_week), 
+                                          segments = seg_obj, 
+                                          metrics = c("users"),
+                                          dim_filters = fc_exact_ret
+                                          ##anti_sample = TRUE
+)
+eligibleUsers<-eligibleUsers[,"users"]
+```
+`r format(eligibleUsers, digits=10, big.mark=",")`
+
+
+##eligible units new - Lighting
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+df_exact_ut_ret <- dim_filter("ga:dimension5","REGEXP","Lighting",caseSensitive = FALSE,not = FALSE)
+fc_exact_ret <- filter_clause_ga4(list(df_exact_ut_ret))
+eligibleUsers <- google_analytics_4(ga_id, 
+                                          c(startDate,endDate), 
+                                          dimensions=c(month_or_week), 
+                                          segments = seg_obj, 
+                                          metrics = c("newUsers"),
+                                          dim_filters = fc_exact_ret
+                                          ##anti_sample = TRUE
+)
+eligibleUsers<-eligibleUsers[,"newUsers"]
+```
+`r format(eligibleUsers, digits=10, big.mark=",")`
+
+##eligible units - Lighting-returning
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+df_exact_ut_ret <- dim_filter("ga:dimension5","REGEXP","Lighting",caseSensitive = FALSE,not = FALSE)
+df_exact_ut_ret2 <- dim_filter("userType","REGEXP","returning",caseSensitive = FALSE,not = FALSE)
+fc_exact_ret <- filter_clause_ga4(list(df_exact_ut_ret,df_exact_ut_ret2),operator="AND")
+lightingreturn <- google_analytics_4(ga_id, 
+                                          c(startDate,endDate), 
+                                          dimensions=c(month_or_week), 
+                                          segments = seg_obj, 
+                                          metrics = c("users"),
+                                          dim_filters = fc_exact_ret
+                                          ##anti_sample = TRUE
+)
+lightingreturn<-lightingreturn[,"users"]
+```
+`r format(lightingreturn, digits=10, big.mark=",")`
+
+#super return - lighting
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+df_exact_ut_ret1 <- dim_filter("ga:sessionCount","EXACT","1",caseSensitive = FALSE,not = TRUE)
+df_exact_ut_ret2 <- dim_filter("ga:sessionCount","EXACT","2",caseSensitive = FALSE,not = TRUE)
+df_exact_ut_ret <- dim_filter("ga:dimension5","REGEXP","Lighting",caseSensitive = FALSE,not = FALSE)
+
+fc_exact_ret <- filter_clause_ga4(list(df_exact_ut_ret1,df_exact_ut_ret2,df_exact_ut_ret),operator="AND")
+Returningusers <- google_analytics_4(ga_id, 
+                                              c(startDate,endDate), 
+                                              dimensions=c(month_or_week), 
+                                              segments = seg_obj, 
+                                              metrics = c('users'),
+                                              dim_filters = fc_exact_ret
+                                              ##anti_sample = TRUE
+)
+```
+`r format(Returningusers[,"users"], digits=10, big.mark=",")`
+
+
+##lighting -mode switches/apply/apply to all/brightness in users
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+df_exact_ut_ret <- dim_filter("ga:dimension19","REGEXP","Lighting",caseSensitive = FALSE,not = FALSE)
+df_exact_ut_ret2 <- dim_filter("eventAction","REGEXP","ModeClicked|Apply|BrightnessClicked|DurationClicked",caseSensitive = FALSE,not = FALSE)
+df_exact_ut_ret3 <- dim_filter("eventCategory","REGEXP","Lighting",caseSensitive = FALSE,not = FALSE)
+fc_exact_ret <- filter_clause_ga4(list(df_exact_ut_ret,df_exact_ut_ret2,df_exact_ut_ret3),operator="AND")
+OCIntelApplied <- google_analytics_4(ga_id, 
+                                          c(startDate,endDate), 
+                                          dimensions=c(month_or_week), 
+                                          segments = seg_obj, 
+                                          metrics = c("users","totalEvents"),
+                                          dim_filters = fc_exact_ret
+                                          ##anti_sample = TRUE
+)
+```
+`r format(OCIntelApplied[,"users"], digits=10, big.mark=",")`
+
+##lighting -mode switches/apply/apply to all/brightness in clicks
+
+`r format(OCIntelApplied[,"totalEvents"], digits=10, big.mark=",")`
+
+
+
+
+##lighting -active users
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+df_exact_ut_ret <- dim_filter("ga:dimension19","REGEXP","Lighting",caseSensitive = FALSE,not = FALSE)
+fc_exact_ret <- filter_clause_ga4(list(df_exact_ut_ret))
+NetworkSwitched <- google_analytics_4(ga_id, 
+                                          c(startDate,endDate), 
+                                          dimensions=c(month_or_week), 
+                                          segments = seg_obj, 
+                                          metrics = c("users"),
+                                          dim_filters = fc_exact_ret
+                                          ##anti_sample = TRUE
+)
+
+```
+`r format(NetworkSwitched[,"users"], digits=10, big.mark=",")`
+
+
+#OC
+
+##eligible units - OC
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+df_exact_ut_ret <- dim_filter("ga:dimension5","REGEXP","over_clock|Overclocking",caseSensitive = FALSE,not = FALSE)
+fc_exact_ret <- filter_clause_ga4(list(df_exact_ut_ret),operator="AND")
+eligibleUsers <- google_analytics_4(ga_id, 
+                                          c(startDate,endDate), 
+                                          dimensions=c(month_or_week), 
+                                          segments = seg_obj, 
+                                          metrics = c("users"),
+                                          dim_filters = fc_exact_ret
+                                          ##anti_sample = TRUE
+)
+eligibleUsers<-eligibleUsers[,"users"]
+```
+`r format(eligibleUsers, digits=10, big.mark=",")`
+
+##eligible units new - OC
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+df_exact_ut_ret <- dim_filter("ga:dimension5","REGEXP","over_clock|Overclocking",caseSensitive = FALSE,not = FALSE)
+fc_exact_ret <- filter_clause_ga4(list(df_exact_ut_ret),operator="AND")
+eligibleUsers <- google_analytics_4(ga_id, 
+                                          c(startDate,endDate), 
+                                          dimensions=c(month_or_week), 
+                                          segments = seg_obj, 
+                                          metrics = c("newUsers"),
+                                          dim_filters = fc_exact_ret
+                                          ##anti_sample = TRUE
+)
+eligibleUsers<-eligibleUsers[,"newUsers"]
+```
+`r format(eligibleUsers, digits=10, big.mark=",")`
+
+##eligible units - oc-returning
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+df_exact_ut_ret <- dim_filter("ga:dimension5","REGEXP","over_clock",caseSensitive = FALSE,not = FALSE)
+df_exact_ut_ret2 <- dim_filter("userType","REGEXP","returning",caseSensitive = FALSE,not = FALSE)
+fc_exact_ret <- filter_clause_ga4(list(df_exact_ut_ret,df_exact_ut_ret2),operator="AND")
+ocreturn <- google_analytics_4(ga_id, 
+                                          c(startDate,endDate), 
+                                          dimensions=c(month_or_week), 
+                                          segments = seg_obj, 
+                                          metrics = c("users"),
+                                          dim_filters = fc_exact_ret
+                                          ##anti_sample = TRUE
+)
+ocreturn<-ocreturn[,"users"]
+```
+`r format(ocreturn, digits=10, big.mark=",")`
+
+
+#super return - OC
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+df_exact_ut_ret1 <- dim_filter("ga:sessionCount","EXACT","1",caseSensitive = FALSE,not = TRUE)
+df_exact_ut_ret2 <- dim_filter("ga:sessionCount","EXACT","2",caseSensitive = FALSE,not = TRUE)
+df_exact_ut_ret <- dim_filter("ga:dimension5","REGEXP","over_clock",caseSensitive = FALSE,not = FALSE)
+
+fc_exact_ret <- filter_clause_ga4(list(df_exact_ut_ret1,df_exact_ut_ret2,df_exact_ut_ret),operator="AND")
+Returningusers <- google_analytics_4(ga_id, 
+                                              c(startDate,endDate), 
+                                              dimensions=c(month_or_week), 
+                                              segments = seg_obj, 
+                                              metrics = c('users'),
+                                              dim_filters = fc_exact_ret
+                                              ##anti_sample = TRUE
+)
+```
+`r format(Returningusers[,"users"], digits=10, big.mark=",")`
+
+
+##OC -applied
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+df_exact_ut_ret <- dim_filter("ga:dimension19","REGEXP","Overclocking_Intel|Overclocking_AMD",caseSensitive = FALSE,not = FALSE)
+df_exact_ut_ret2 <- dim_filter("eventAction","REGEXP","Apply",caseSensitive = FALSE,not = FALSE)
+df_exact_ut_ret3 <- dim_filter("eventCategory","REGEXP","Overclocking",caseSensitive = FALSE,not = FALSE)
+fc_exact_ret <- filter_clause_ga4(list(df_exact_ut_ret,df_exact_ut_ret2,df_exact_ut_ret3),operator="AND")
+OCIntelApplied <- google_analytics_4(ga_id, 
+                                          c(startDate,endDate), 
+                                          dimensions=c(month_or_week), 
+                                          segments = seg_obj, 
+                                          metrics = c("users"),
+                                          dim_filters = fc_exact_ret
+                                          ##anti_sample = TRUE
+)
+OCIntelApplied<-OCIntelApplied[,"users"]
+```
+`r format(OCIntelApplied, digits=10, big.mark=",")`
+
+##OC -applied or ran benchmark
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+df_exact_ut_ret <- dim_filter("ga:dimension19","REGEXP","Overclocking_Intel|Overclocking_AMD",caseSensitive = FALSE,not = FALSE)
+df_exact_ut_ret2 <- dim_filter("eventAction","REGEXP","Apply|RunBenchmark",caseSensitive = FALSE,not = FALSE)
+df_exact_ut_ret3 <- dim_filter("eventCategory","REGEXP","Overclocking",caseSensitive = FALSE,not = FALSE)
+fc_exact_ret <- filter_clause_ga4(list(df_exact_ut_ret,df_exact_ut_ret2,df_exact_ut_ret3),operator="AND")
+OCIntelApplied <- google_analytics_4(ga_id, 
+                                          c(startDate,endDate), 
+                                          dimensions=c(month_or_week), 
+                                          segments = seg_obj, 
+                                          metrics = c("users"),
+                                          dim_filters = fc_exact_ret
+                                          ##anti_sample = TRUE
+)
+OCIntelApplied<-OCIntelApplied[,"users"]
+```
+`r format(OCIntelApplied, digits=10, big.mark=",")`
+
+##OC -ran benchmark
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+df_exact_ut_ret <- dim_filter("ga:dimension19","REGEXP","Overclocking_Intel|Overclocking_AMD",caseSensitive = FALSE,not = FALSE)
+df_exact_ut_ret2 <- dim_filter("eventAction","REGEXP","RunBenchmark",caseSensitive = FALSE,not = FALSE)
+df_exact_ut_ret3 <- dim_filter("eventCategory","REGEXP","Overclocking",caseSensitive = FALSE,not = FALSE)
+fc_exact_ret <- filter_clause_ga4(list(df_exact_ut_ret,df_exact_ut_ret2,df_exact_ut_ret3),operator="AND")
+OCIntelApplied <- google_analytics_4(ga_id, 
+                                          c(startDate,endDate), 
+                                          dimensions=c(month_or_week), 
+                                          segments = seg_obj, 
+                                          metrics = c("users"),
+                                          dim_filters = fc_exact_ret
+                                          ##anti_sample = TRUE
+)
+OCIntelApplied<-OCIntelApplied[,"users"]
+```
+`r format(OCIntelApplied, digits=10, big.mark=",")`
+
+##OC -applied
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+df_exact_ut_ret <- dim_filter("ga:dimension19","REGEXP","Overclocking_Intel|Overclocking_AMD",caseSensitive = FALSE,not = FALSE)
+df_exact_ut_ret2 <- dim_filter("eventAction","REGEXP","Apply",caseSensitive = FALSE,not = FALSE)
+df_exact_ut_ret3 <- dim_filter("eventCategory","REGEXP","Overclocking",caseSensitive = FALSE,not = FALSE)
+fc_exact_ret <- filter_clause_ga4(list(df_exact_ut_ret,df_exact_ut_ret2,df_exact_ut_ret3),operator="AND")
+OCIntelApplied <- google_analytics_4(ga_id, 
+                                          c(startDate,endDate), 
+                                          dimensions=c(month_or_week), 
+                                          segments = seg_obj, 
+                                          metrics = c("users"),
+                                          dim_filters = fc_exact_ret
+                                          ##anti_sample = TRUE
+)
+OCIntelApplied<-OCIntelApplied[,"users"]
+```
+`r format(OCIntelApplied, digits=10, big.mark=",")`
+
+
+
+##OC -active users
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+df_exact_ut_ret <- dim_filter("ga:dimension19","REGEXP","Overclocking",caseSensitive = FALSE,not = FALSE)
+fc_exact_ret <- filter_clause_ga4(list(df_exact_ut_ret))
+NetworkSwitched <- google_analytics_4(ga_id, 
+                                          c(startDate,endDate), 
+                                          dimensions=c(month_or_week), 
+                                          segments = seg_obj, 
+                                          metrics = c("users"),
+                                          dim_filters = fc_exact_ret
+                                          ##anti_sample = TRUE
+)
+
+```
+`r format(NetworkSwitched[,"users"], digits=10, big.mark=",")`
+

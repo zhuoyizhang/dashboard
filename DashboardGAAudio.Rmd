@@ -1,0 +1,162 @@
+#GA monthly report - Audio
+
+##one known issue:with or without segment, user and all users are not matching with dashboard
+
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+##auth
+
+library(googleAnalyticsR)
+library(googleAuthR)
+##service_token <- gar_auth_service(json_file="C:\\Users\\Random\\Downloads\\R-40e8fcb3b34b.json")
+Sys.setenv(GA_AUTH_FILE='C:\\Users\\zhanzhuo.AUTH\\Downloads\\R-3b6ace1ed38c.json')
+
+
+
+
+options(googleAuthR.client_id = "6825601687-p6qn50ihi2pii5nv6boh3h5gbp6d5u2n.apps.googleusercontent.com")
+options(googleAuthR.client_secret = "3b6ace1ed38cba6d8840d9bc63fa03da01cc1629")
+options(googleAuthR.scopes.selected = "https://www.googleapis.com/auth/analytics")
+ga_auth()
+
+##save view id for JumpStart
+##account_list <- ga_account_list()
+##ga_id <- account_list[17,'viewId']
+ga_id<-"117489773"
+##meta <- google_analytics_meta()
+##choose JS production segment
+##my_segments <- ga_segment_list()
+##segs <- my_segments$items
+##segs[,c("name","id","defintion")]
+segment_for_call <- "gaid::Nxk3WGL_T4-cQT3yLiEgIA"
+
+
+
+## make Audio segment elements
+# con1 <-segment_element("appVersion", 
+#                       operator = "REGEXP", 
+#                       type = "DIMENSION", 
+#                       scope = "SESSION",
+#                       expressions="1.0.105.0|1.0.111.0|1.0.137.0|1.0.138.0")
+# con2 <-segment_element("country", 
+#                       operator = "REGEXP", 
+#                       type = "DIMENSION", 
+#                       expressions="china|germany|korea", 
+#                       caseSensitive = FALSE,
+#                       scope = "SESSION",
+#                       not=TRUE)
+# con3 <-segment_element("ga:dimension1", 
+#                       operator = "REGEXP", 
+#                       type = "DIMENSION", 
+#                       scope = "SESSION",
+#                       expressions="china|germany|korea", 
+#                       caseSensitive = FALSE,
+#                       not = TRUE)
+# sv_simple1 <- segment_vector_simple(list(list(con1)))
+# sv_simple2 <- segment_vector_simple(list(list(con2)))
+# sv_simple3 <- segment_vector_simple(list(list(con3)))
+# 
+# 
+# seg_defined <- segment_define(list(sv_simple1,sv_simple2,sv_simple3))
+##seg_defined <- segment_define(list(sv_simple1))
+
+##seg_obj <- segment_ga4("Audio Production Segment", user_segment = seg_defined)
+
+
+seg_obj <- segment_ga4("audio", segment_id = segment_for_call)
+##meta2 <-meta[,c("name","type","status","uiName","group","description")]
+
+startDate<-"2018-02-25"
+endDate<-"2018-03-10"
+
+#month_or_week<-"ga:yearMonth"
+month_or_week<-"ga:week"
+
+```
+The date range is from `r startDate` to `r endDate`.
+
+
+##First time launch (new users) in 'K
+
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+
+AudioNewUsers <- google_analytics_4(ga_id, 
+                                    c(startDate,endDate), 
+                                    dimensions=c(month_or_week), 
+                                    segments = seg_obj, 
+                                    metrics = c('newUsers','users')
+                                    ##anti_sample = TRUE
+                                    )
+```
+`r format(AudioNewUsers[,"newUsers"], digits=10, big.mark=",")`
+
+
+
+## Avg speaker selections per active user per month
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+df_exact_ea_speaker <- dim_filter("eventAction","EXACT","SelectOutputDevice",caseSensitive = FALSE,not = FALSE)
+
+fc_exact_speaker <- filter_clause_ga4(list(df_exact_ea_speaker))
+avgSpeakerSelection <- google_analytics_4(ga_id, 
+                                              c(startDate,endDate), 
+                                              dimensions=c(month_or_week), 
+                                              segments = seg_obj, 
+                                              metrics = c('users','totalEvents'),
+                                              dim_filters = fc_exact_speaker
+                                              ##anti_sample = TRUE
+)
+```
+`r format(avgSpeakerSelection[,"totalEvents"]/avgSpeakerSelection[,"users"], digits=10, big.mark=",")`
+
+## Avg microphone selections per active user per month
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+df_exact_ea_micro <- dim_filter("eventAction","EXACT","SelectInputDevice",caseSensitive = FALSE,not = FALSE)
+
+fc_exact_micro <- filter_clause_ga4(list(df_exact_ea_micro))
+avgMicroSelection <- google_analytics_4(ga_id, 
+                                              c(startDate,endDate), 
+                                              dimensions=c(month_or_week), 
+                                              segments = seg_obj, 
+                                              metrics = c('users','totalEvents'),
+                                              dim_filters = fc_exact_micro
+                                              ##anti_sample = TRUE
+)
+```
+`r format(avgMicroSelection[,"totalEvents"]/avgMicroSelection[,"users"], digits=10, big.mark=",")`
+
+
+
+##Active Users in 'K
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+activeUsers  <- google_analytics_4(ga_id, 
+                                        c(startDate,endDate), 
+                                        segments = seg_obj, 
+                                        dimensions=c(month_or_week), 
+                                        metrics = c('users','newUsers')
+                                        ##anti_sample = TRUE
+)
+```
+`r format(activeUsers[,"users"], digits=10, big.mark=",")`
+
+##Returning users
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+df_exact_ut_ret <- dim_filter("userType","EXACT","Returning Visitor",caseSensitive = FALSE,not = FALSE)
+fc_exact_ret <- filter_clause_ga4(list(df_exact_ut_ret))
+Returningusers <- google_analytics_4(ga_id, 
+                                              c(startDate,endDate), 
+                                              dimensions=c(month_or_week), 
+                                              segments = seg_obj, 
+                                              metrics = c('users'),
+                                              dim_filters = fc_exact_ret
+                                              ##anti_sample = TRUE
+)
+```
+`r format(Returningusers[,"users"], digits=10, big.mark=",")`
+
+
+
+
