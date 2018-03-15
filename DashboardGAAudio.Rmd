@@ -80,7 +80,7 @@ The date range is from `r startDate` to `r endDate`.
 ```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
 
 
-AudioNewUsers <- google_analytics_4(ga_id, 
+AudioNewUsers <- google_analytics(ga_id, 
                                     c(startDate,endDate), 
                                     dimensions=c(month_or_week), 
                                     segments = seg_obj, 
@@ -98,7 +98,7 @@ AudioNewUsers <- google_analytics_4(ga_id,
 df_exact_ea_speaker <- dim_filter("eventAction","EXACT","SelectOutputDevice",caseSensitive = FALSE,not = FALSE)
 
 fc_exact_speaker <- filter_clause_ga4(list(df_exact_ea_speaker))
-avgSpeakerSelection <- google_analytics_4(ga_id, 
+avgSpeakerSelection <- google_analytics(ga_id, 
                                               c(startDate,endDate), 
                                               dimensions=c(month_or_week), 
                                               segments = seg_obj, 
@@ -115,7 +115,7 @@ avgSpeakerSelection <- google_analytics_4(ga_id,
 df_exact_ea_micro <- dim_filter("eventAction","EXACT","SelectInputDevice",caseSensitive = FALSE,not = FALSE)
 
 fc_exact_micro <- filter_clause_ga4(list(df_exact_ea_micro))
-avgMicroSelection <- google_analytics_4(ga_id, 
+avgMicroSelection <- google_analytics(ga_id, 
                                               c(startDate,endDate), 
                                               dimensions=c(month_or_week), 
                                               segments = seg_obj, 
@@ -131,7 +131,7 @@ avgMicroSelection <- google_analytics_4(ga_id,
 ##Active Users in 'K
 ```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
 
-activeUsers  <- google_analytics_4(ga_id, 
+activeUsers  <- google_analytics(ga_id, 
                                         c(startDate,endDate), 
                                         segments = seg_obj, 
                                         dimensions=c(month_or_week), 
@@ -146,7 +146,7 @@ activeUsers  <- google_analytics_4(ga_id,
 
 df_exact_ut_ret <- dim_filter("userType","EXACT","Returning Visitor",caseSensitive = FALSE,not = FALSE)
 fc_exact_ret <- filter_clause_ga4(list(df_exact_ut_ret))
-Returningusers <- google_analytics_4(ga_id, 
+Returningusers <- google_analytics(ga_id, 
                                               c(startDate,endDate), 
                                               dimensions=c(month_or_week), 
                                               segments = seg_obj, 
